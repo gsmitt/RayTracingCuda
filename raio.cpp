@@ -6,7 +6,7 @@ origem(origem),direcao(direcao)
 {
 }
 
-bool Raio::hit_esfera(Esfera *a)
+double Raio::hit_esfera(Esfera *a)
 {
     Vetor3 d_o = origem - a->centro;
     double aa = direcao.prod_escalar(direcao);
@@ -14,13 +14,21 @@ bool Raio::hit_esfera(Esfera *a)
     double c = d_o.prod_escalar(d_o) - (a->raio*a->raio);
     double discriminant = b*b - 4*aa*c;
 
-    if (discriminant > 0)
+    if (discriminant < 0)
     {
-        //std::cout << "discriminante" << discriminant << "\n";
+        return -1.0;   
+    }else
+    {
+        return (-b - sqrt(discriminant)) / 2.0  * aa;
     }
+    
     
 
     return (discriminant > 0);
+}
+
+Vetor3 Raio::at(double t) const{
+    return origem + t*direcao;
 }
 
 Raio::~Raio()

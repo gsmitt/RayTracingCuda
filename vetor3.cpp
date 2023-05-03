@@ -12,6 +12,11 @@ double Vetor3::prod_escalar(Vetor3 v) {
     return a * v.a + b * v.b + c * v.c;
 }
 
+Vetor3 Vetor3::unit_vector()
+{
+    double mod = modulo();
+    return Vetor3(a/mod, b/mod, c/mod);
+}
 
 
 Vetor3& Vetor3::operator*=(const double t) {

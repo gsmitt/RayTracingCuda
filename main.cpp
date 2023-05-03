@@ -1,19 +1,30 @@
 #include <iostream>
 #include "raio.h"
+#include "camera.h"
 #include <stdio.h>
 
 using namespace std;
 
-Esfera esfera_a(Vetor3(0,0,-5), 0.5);
-
+Esfera esfera_a(Vetor3(0,0,-2), 0.5);
+Camera cameraa;
 
 
 Vetor3 cor_pixel(Raio *r)
 {
-    if (r->hit_esfera( &esfera_a)) return Vetor3(1,0,0);
+    double t = r->hit_esfera(&esfera_a);
+    if (t > 0)
+    {
+        Vetor3 n = r->at(t)- Vetor3(0,0,-1);
+        n = n.unit_vector();
+        return 0.5*Vetor3(n.a+1,n.b+1,n.c+1);
+    }
     Vetor3 unit_direction = r->direcao/r->direcao.modulo();
-    double t = 0.5*(unit_direction.b + 1.0);
-    return Vetor3(((1.0-t)*1.0)+0.5*t, ((1.0-t)*1.0)+0.7*t, ((1.0-t)*1.0)+1.0*t);
+    t = 0.5*(unit_direction.b + 1.0);
+    return (1.0-t)*Vetor3(1.0, 1.0, 1.0) + t*Vetor3(0.5, 0.7, 1.0);
+    // if (r->hit_esfera( &esfera_a)) return Vetor3(0.5,0.5,0.5);
+    // Vetor3 unit_direction = r->direcao/r->direcao.modulo();
+    // double t = 0.5*(unit_direction.b + 1.0);
+    // return Vetor3(((1.0-t)*2.0)+0.5*t, ((1.0-t)*1.0)+0.7*t, ((1.0-t)*1.0)+1.0*t);
 }
 
 
@@ -29,18 +40,8 @@ int main()
 {
     // Image
     const double aspect_ratio = 16.0 / 9.0;
-    const int image_width = 800;
+    const int image_width = 3840;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-
-    // Camera
-    double viewport_height = 2.0;
-    double viewport_width = aspect_ratio * viewport_height;
-    double focal_length = 1.0;
-
-    Vetor3 origin = Vetor3(0, 0, 0);
-    Vetor3 horizontal = Vetor3(viewport_width, 0, 0);
-    Vetor3 vertical = Vetor3(0, viewport_height, 0);
-    Vetor3 lower_left_corner = origin - horizontal/2 - vertical/2 - Vetor3(0, 0, focal_length);
 
     // Render
     std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
@@ -52,7 +53,7 @@ int main()
         {
             double u = double(i) / (image_width-1);
             double v = double(j) / (image_height-1);
-            Raio r(origin, lower_left_corner + u*horizontal + v*vertical - origin);
+            Raio r(cameraa.get_raio(u,v));
             Vetor3 pixel_color = cor_pixel(&r);
             write_color(std::cout, pixel_color);
         }

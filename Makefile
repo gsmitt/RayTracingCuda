@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -Wall -Wextra -pedantic -std=c++11
 
-SRCS = main.cpp vetor3.cpp raio.cpp esfera.cpp
+SRCS = main.cpp vetor3.cpp raio.cpp esfera.cpp camera.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 all: app

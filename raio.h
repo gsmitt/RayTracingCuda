@@ -11,10 +11,10 @@ public:
     Vetor3 origem, direcao;
 
     //Vetor do ponto + (vetor direcao * t)
-    Vetor3 at(double t);
+    Vetor3 at(double t) const;
 
     //
-    bool  hit_esfera(Esfera *a);
+    double hit_esfera(Esfera *a);
 
     Raio(const Vetor3& origem, const Vetor3& direcao);
     ~Raio();

@@ -22,4 +22,5 @@ public:
     Vetor3 operator+(const Vetor3 &v) const;
     Vetor3 operator-(const Vetor3 &v) const;
 
+    Vetor3 unit_vector();
 };

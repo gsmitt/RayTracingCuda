@@ -7,6 +7,7 @@
 using namespace std;
 
 Esfera esfera_a(Vetor3(0,0,-2), 0.5);
+Esfera esfera_b(Vetor3(-0.5,0,-2), 1.0);
 Camera cameraa;
 
 
@@ -32,6 +33,15 @@ Vetor3 cor_pixel(Raio *r)
         Vetor3 vetor_normal = registro.normal;
         vetor_normal = vetor_normal.unit_vector();
         return 0.5*Cor(vetor_normal.a+1,vetor_normal.b+1, vetor_normal.c+1);
+    }
+
+    esfera_b.hit(r,-100,100,registro);
+    t = registro.t;
+    if (t > 0)
+    {
+        Vetor3 vetor_normal = registro.normal;
+        vetor_normal = vetor_normal.unit_vector();
+        return 0.2*Cor(vetor_normal.a+1,vetor_normal.b+1, vetor_normal.c+1);
     }
     
     //Define o vetor unitario do raio dependendo de qual parte do espaço ele esta sendo atirado

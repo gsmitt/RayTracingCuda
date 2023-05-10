@@ -15,7 +15,7 @@ Camera::Camera()
 
 }
 
-Camera::Camera(Vetor3 origem, Vetor3 canto_esq_inf, Vetor3 horizontal, Vetor3 vertical):
+Camera::Camera(Ponto3 origem, Vetor3 canto_esq_inf, Vetor3 horizontal, Vetor3 vertical):
 origem(origem),canto_esq_inf(canto_esq_inf),horizontal(horizontal),vertical(vertical)
 {}
 

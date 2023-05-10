@@ -12,7 +12,7 @@ public:
     Vetor3(double a, double b, double c);
 
     double modulo();
-    double prod_escalar(Vetor3 v);
+    double prod_escalar(const Vetor3 &v);
 
     Vetor3& operator+=(const Vetor3 &v);
     Vetor3& operator*=(const double t);
@@ -24,3 +24,6 @@ public:
 
     Vetor3 unit_vector();
 };
+
+using Ponto3 = Vetor3;
+using Cor = Vetor3;

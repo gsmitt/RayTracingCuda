@@ -8,7 +8,7 @@ double Vetor3::modulo() {
     return sqrt(a * a + b * b + c * c);
 }
 
-double Vetor3::prod_escalar(Vetor3 v) {
+double Vetor3::prod_escalar(const Vetor3 &v) {
     return a * v.a + b * v.b + c * v.c;
 }
 

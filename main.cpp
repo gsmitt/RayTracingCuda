@@ -1,7 +1,8 @@
 #include <iostream>
-#include "raio.h"
+#include "esfera.h"
 #include "camera.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -11,22 +12,34 @@ Camera cameraa;
 
 Vetor3 cor_pixel(Raio *r)
 {
-    double t = r->hit_esfera(&esfera_a);
+    hit_record registro;
+
+    //Verifica onde o raio r encontra a esfera
+    esfera_a.hit(r,-100,100,registro);
+    double t = registro.t;
+    // if (t > 0)
+    // {
+    //     //Vetor normal é o ponto de encontro menos o centro da esfera
+    //     Vetor3 vetor_normal = r->at(t) - esfera_a.centro;
+    //     //Transforma o normal em unitário, para colorir a esfera
+    //     vetor_normal = vetor_normal.unit_vector();
+    //     //Retorna uma cor dependendo do vetor normal, como é unitario entao esta entre -1 e 1.
+    //     //Pega o absoluto, vetores que apontam pro mesmo z tem a mesma cor.
+    //     return Cor(abs(vetor_normal.a),abs(vetor_normal.b),abs(vetor_normal.c));
+    // }
     if (t > 0)
     {
-        Vetor3 n = r->at(t)- Vetor3(0,0,-1);
-        n = n.unit_vector();
-        return 0.5*Vetor3(n.a+1,n.b+1,n.c+1);
+        Vetor3 vetor_normal = registro.normal;
+        vetor_normal = vetor_normal.unit_vector();
+        return 0.5*Cor(vetor_normal.a+1,vetor_normal.b+1, vetor_normal.c+1);
     }
+    
+    //Define o vetor unitario do raio dependendo de qual parte do espaço ele esta sendo atirado
     Vetor3 unit_direction = r->direcao/r->direcao.modulo();
+    //Definindo a cor do fundo
     t = 0.5*(unit_direction.b + 1.0);
-    return (1.0-t)*Vetor3(1.0, 1.0, 1.0) + t*Vetor3(0.5, 0.7, 1.0);
-    // if (r->hit_esfera( &esfera_a)) return Vetor3(0.5,0.5,0.5);
-    // Vetor3 unit_direction = r->direcao/r->direcao.modulo();
-    // double t = 0.5*(unit_direction.b + 1.0);
-    // return Vetor3(((1.0-t)*2.0)+0.5*t, ((1.0-t)*1.0)+0.7*t, ((1.0-t)*1.0)+1.0*t);
+    return (1.0-t)*Cor(1.0, 1.0, 0.2) + t*Cor(0.5, 0.7, 1.0);
 }
-
 
 void write_color(std::ostream &out, Vetor3 pixel_color) 
 {
@@ -40,7 +53,7 @@ int main()
 {
     // Image
     const double aspect_ratio = 16.0 / 9.0;
-    const int image_width = 3840;
+    const int image_width = 1600;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
 
     // Render

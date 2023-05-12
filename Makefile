@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -pedantic -std=c++11
+CXXFLAGS = -Ofast -march=native -Wall -Wextra -pedantic -std=c++14
 
 SRCS = main.cpp vetor3.cpp raio.cpp esfera.cpp camera.cpp
 OBJS = $(SRCS:.cpp=.o)
@@ -17,3 +17,6 @@ app: $(OBJS)
 
 clean:
 	rm -f app $(OBJS)
+
+run: app
+	./app > output_`date +'%Y%m%d_%H%M%S'`.ppm

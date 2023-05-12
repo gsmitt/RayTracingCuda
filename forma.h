@@ -29,6 +29,6 @@ struct hit_record
  */
 class Forma
 {
-protected:
+public:
     virtual bool hit(Raio *r, double t_min, double t_max, hit_record& registro) = 0;
 };

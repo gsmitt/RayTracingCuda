@@ -19,6 +19,8 @@ Vetor3 Vetor3::unit_vector()
 }
 
 
+
+
 Vetor3& Vetor3::operator*=(const double t) {
     a *= t;
     b *= t;

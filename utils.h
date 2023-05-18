@@ -7,11 +7,14 @@
 #include <stdlib.h>
 #include <cmath>
 #include <limits>
+#include <ctime>
+#include <cstdlib>
 
 using std::shared_ptr;
 using std::make_shared;
 using std::sqrt;
 
+using namespace std;
 
 
 const double infinito = std::numeric_limits<double>::infinity();

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 
+
 class Vetor3
 {
 public:
@@ -13,6 +14,7 @@ public:
 
     double modulo();
     double prod_escalar(const Vetor3 &v);
+
 
     Vetor3& operator+=(const Vetor3 &v);
     Vetor3& operator*=(const double t);

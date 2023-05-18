@@ -4,11 +4,16 @@
 
 struct hit_record
 {
+    //Ponto de colisao
     Ponto3 p;
+    //Vetor normal da colisao com a forma
     Vetor3 normal;
+    //altura onde o raio colide com a forma
     double t;
+    //Verificar se a visao da forma nao vai ser obstruida por outro objeto.
     bool frente;
 
+    //Verifica se o raio esta fora ou dentro da forma
     inline void normal_face(Raio *r, Vetor3 fora)
     {
         frente = r->direcao.prod_escalar(fora) < 0;
@@ -18,6 +23,7 @@ struct hit_record
         }
         else
         {
+            //Se estiver dentro, usar o vetor oposto ao normal.
             normal = fora/(-1);
         }
     }

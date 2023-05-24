@@ -1,6 +1,7 @@
 #pragma once
 
 #include "raio.h"
+#include "material.h"
 
 struct hit_record
 {
@@ -12,6 +13,8 @@ struct hit_record
     double t;
     //Verificar se a visao da forma nao vai ser obstruida por outro objeto.
     bool frente;
+
+    Material *mat_ptr;
 
     //Verifica se o raio esta fora ou dentro da forma
     inline void normal_face(Raio *r, Vetor3 fora)

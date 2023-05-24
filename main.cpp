@@ -7,14 +7,86 @@ using namespace std;
 Camera cameraa;
 std::vector<std::unique_ptr<Forma>> mundo;
 
-Vetor3 reflexao_aleatoria() {
-    while (true) {
+Vetor3 reflexao_aleatoria() 
+{
+    while (true) 
+    {
         Ponto3 p = Vetor3(random_double(-1,1),random_double(-1,1),random_double(-1,1));
         if (p.prod_escalar(p) >= 1) continue;
         return p;
     }
 }
 
+Cor cor_phon(Raio *r, Ponto3 luz, int intensidade_luz, int coef_p)
+{
+    hit_record registro;
+
+    for (const auto& forma : mundo) 
+    {
+        if (forma->hit(r, 0.001, infinito, registro))
+        {
+            Vetor3 v = r->direcao.unit_vector();
+            Vetor3 l = luz - registro.p;
+            l = l/l.modulo();
+            Vetor3 h = v+l;
+            h = h/h.modulo();
+            double nl = l.prod_escalar(registro.normal);
+            Cor corlamb;
+            if (nl > 0)
+            {
+                corlamb =  Cor(0,0.5*intensidade_luz*nl,0);
+            }
+            else
+            {
+                corlamb = Cor(0,0 ,0);
+            }
+            
+            
+
+            int coeficiente_spec;
+            double nh = h.prod_escalar(registro.normal);
+            if(nh > 0)
+            {
+                return Cor((0.5*intensidade_luz*nh),(0.5*intensidade_luz*nh),(0.5*intensidade_luz*nh)) + corlamb;
+            }
+            return corlamb;
+        }
+    }
+    
+    //Define o vetor unitario do raio dependendo de qual parte do espaço ele esta sendo atirado
+    Vetor3 unit_direction = r->direcao.unit_vector();
+    //Definindo a cor do fundo
+    double t = 0.5*(unit_direction.b + 1.0);
+    return (1.0-t)*Cor(0.2, 0, 0.7) + t*Cor(1,1,1);
+}
+
+Cor cor_luminosa(Raio *r, Ponto3 luz, int intensidade_luz)
+{
+    hit_record registro;
+
+    for (const auto& forma : mundo) 
+    {
+        if (forma->hit(r, 0.001, infinito, registro))
+        {
+            Vetor3 v = r->direcao.unit_vector();
+            v = v/v.modulo();
+            Vetor3 l = luz - registro.p;
+            l = l/l.modulo();
+            double nl = l.prod_escalar(registro.normal);
+            if (nl > 0)
+            {
+                return Cor(0,0.5*intensidade_luz*nl,0);
+            }
+            return Cor(0,0.5+nl,0);
+        }
+    }
+    
+    //Define o vetor unitario do raio dependendo de qual parte do espaço ele esta sendo atirado
+    Vetor3 unit_direction = r->direcao.unit_vector();
+    //Definindo a cor do fundo
+    double t = 0.5*(unit_direction.b + 1.0);
+    return (1.0-t)*Cor(0.2, 0, 0.7) + t*Cor(1,1,1);
+}
 
 
 Cor cor_pixel(Raio *r, int depth = 1)
@@ -44,7 +116,7 @@ Cor cor_pixel(Raio *r, int depth = 1)
     {   
         Ponto3 alvo = registro_perto.p + registro_perto.normal + reflexao_aleatoria();
         Raio r_temp = Raio(registro_perto.p, alvo - registro_perto.p);
-        return 0.9 * cor_pixel(&r_temp,(depth-1));
+        return 0.5 * cor_pixel(&r_temp,(depth-1));
 
         // Mostrar os vetores normais por cores
         // return 0.5 * Cor(registro_perto.normal.a + 1,registro_perto.normal.b + 1,registro_perto.normal.c + 1);
@@ -91,7 +163,7 @@ int main()
     // mundo.emplace_back(make_unique<Esfera>(Vetor3(0, 0.9, -0.9), 0.5));
 
     mundo.emplace_back(make_unique<Esfera>(Ponto3(0,-100.5,-1), 100));
-
+    mundo.emplace_back(make_unique<Esfera>(Ponto3(4,4, -2), 1));
 
     // Image
     const double aspect_ratio = 16.0 / 9.0;
@@ -99,7 +171,7 @@ int main()
     const int image_height = static_cast<int>(image_width / aspect_ratio);
 
 
-    const int amostra_por_pixel = 16;
+    const int amostra_por_pixel = 10;
 
     const int max_depth = 1000;
 
@@ -117,11 +189,12 @@ int main()
                 double u = (i + random_double()) / (image_width-1);
                 double v = (j + random_double()) / (image_height-1);
                 Raio r(cameraa.get_raio(u,v));
-                cor_pixel_final += cor_pixel(&r, max_depth);
+                // cor_pixel_final += cor_pixel(&r, max_depth);
+                // cor_pixel_final += cor_luminosa(&r,Ponto3(0,2,0),2);
+                cor_pixel_final += cor_phon(&r,Ponto3(4,4,-2), 2 , 1);
             }
             write_color(std::cout, cor_pixel_final, amostra_por_pixel);
         }
     }
-
     std::cerr << "\nDone.\n";
 }

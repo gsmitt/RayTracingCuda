@@ -7,7 +7,7 @@ OBJS = $(SRCS:.cpp=.o)
 all: app
 
 app: $(OBJS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 %.d: %.cpp
 	$(CXX) $(CXXFLAGS) -MM $< -MF $@
@@ -17,6 +17,11 @@ app: $(OBJS)
 
 clean:
 	rm -f app $(OBJS)
+
+png:
+	./app > output_`date +'%Y%m%d_%H%M%S'`.ppm
+	convert output_*.ppm output.png
+	rm -f output_*.ppm
 
 run: app
 	./app > output_`date +'%Y%m%d_%H%M%S'`.ppm

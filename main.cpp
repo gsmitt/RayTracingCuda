@@ -1,6 +1,7 @@
 #include "esfera.h"
 #include "camera.h"
 #include "utils.h"
+#include <SDL2/SDL.h>
 
 using namespace std;
 
@@ -19,49 +20,68 @@ Vetor3 reflexao_aleatoria()
     }
 }
 
-Cor cor_phon(Raio *r, Ponto3 luz, int intensidade_luz, int coef_p)
+Cor cor_phon(Raio *r, int intensidade_luz, int coef_p)
 {
-    hit_record registro;
+    hit_record registro, rs;
+    Cor corFinal = Cor(0,0,0);
 
-    
     for (const auto& forma : mundo) 
     {
         if (forma->hit(r, 0.001, infinito, registro))
         {
-            
-            Cor corFinal;
-            
-            for (const auto& ponto : luzes)
-            {
-                Vetor3 v = r->direcao.unit_vector();
-                Vetor3 l = *ponto - registro.p;
-                l = l/l.modulo();
-                Vetor3 h = v+l;
-                h = h/h.modulo();
-                double nl = l.prod_escalar(registro.normal);
-                Cor corlamb;
-                if (nl > 0)
-                {
-                    corlamb = (intensidade_luz*nl)*registro.cor;
-                }
-                else
-                {
-                    corlamb = Cor(0,0,0);
-                }
                 
-                int coeficiente_spec;
-                double nh = h.prod_escalar(registro.normal);
-                if(nh > 0)
+                for (const auto& ponto : luzes)
                 {
-                    corFinal += Cor((0.5*intensidade_luz*nh),(0.5*intensidade_luz*nh),(0.5*intensidade_luz*nh)) + corlamb;
+                    Vetor3 l = *ponto - registro.p;
+                    
+                    double distancia_ao_quadrado = l.prod_escalar(l);
+                    l = l / sqrt(distancia_ao_quadrado); // Normalizar o vetor l
+                    double intensidade_atenuada = intensidade_luz / (distancia_ao_quadrado);
+
+                    for (const auto& forma2 : mundo)
+                    {
+                        Raio raioSombra = Raio(registro.p, l);
+                        if (forma2->hit(&raioSombra, 0.00001, infinito, rs))
+                        {
+                            
+                        }
+                        else
+                        {
+                            Vetor3 v = r->direcao.unit_vector();
+                            Vetor3 h = v+l;
+                            h = h/h.modulo();
+                            double nl = l.prod_escalar(registro.normal);
+                            Cor corlamb;
+                            if (nl > 0)
+                            {
+                                corlamb = (intensidade_atenuada*nl)*registro.cor;
+                            }
+                            else
+                            {
+                                corlamb = Cor(0,0,0);
+                            }
+                            
+                            //int coeficiente_spec;
+                            double nh = h.prod_escalar(registro.normal);
+                            if(nh > 0)
+                            {
+                                corFinal += Cor((0.1*intensidade_atenuada*nh),(0.1*intensidade_atenuada*nh),(0.1*intensidade_atenuada*nh)) + corlamb;
+                            }
+                            else
+                            {
+                                corFinal += corlamb;
+                            }
+                        }
+                        
+
+                    }
+
+
+
+                    
+                    
                 }
-                else
-                {
-                    corFinal += corlamb;
-                }
-                
-            }
-            return corFinal;
+                return corFinal;
         }
     }
 
@@ -163,25 +183,23 @@ void write_color(std::ostream &out, Vetor3 pixel_color, int amostras_por_pixel)
 
 int main()
 {
-    int quantidadebola = 100;
+    // int quantidadebola = 20;
 
-    for (int i = 0; i < quantidadebola; i++)
-    {
-        mundo.emplace_back(make_unique<Esfera>(Vetor3(random_double(-4,4), random_double(-3,3), random_double(-2,-10)),random_double(0.1,1),Cor(random_double(),random_double(),random_double())));
-    }
+    // for (int i = 0; i < quantidadebola; i++)
+    // {
+    //     mundo.emplace_back(make_unique<Esfera>(Vetor3(random_double(-4,4), random_double(-3,3), random_double(-2,-10)),random_double(0.1,1),Cor(random_double(),random_double(),random_double())));
+    // }
     
 
     
     mundo.emplace_back(make_unique<Esfera>(Ponto3(-0.7, 0, -1.2), 0.5, Cor(1,0,0)));
-    mundo.emplace_back(make_unique<Esfera>(Ponto3(0.7, 0, -0.9), 0.5, Cor(0,0,1)));
-    // mundo.emplace_back(make_unique<Esfera>(Vetor3(0, 0.9, -0.9), 0.5));
-
+    mundo.emplace_back(make_unique<Esfera>(Ponto3(0.3, 0, -1), 0.6, Cor(0,0,1)));
     mundo.emplace_back(make_unique<Esfera>(Ponto3(0,-100.5,-1), 100));
-    mundo.emplace_back(make_unique<Esfera>(Ponto3(4,4, -2), 1));
 
-    luzes.emplace_back(make_unique<Ponto3>(4,4,-2));
+
+    luzes.emplace_back(make_unique<Ponto3>(-8,8,-2));
     // luzes.emplace_back(make_unique<Ponto3>(4,4, 2));
-    luzes.emplace_back(make_unique<Ponto3>(0,2, 4));
+    luzes.emplace_back(make_unique<Ponto3>(8, 8, -0.8));
 
 
     // Image
@@ -210,7 +228,7 @@ int main()
                 Raio r(cameraa.get_raio(u,v));
                 // cor_pixel_final += cor_pixel(&r, max_depth);
                 // cor_pixel_final += cor_luminosa(&r,Ponto3(0,2,0),2);
-                cor_pixel_final += cor_phon(&r,Ponto3(4,4,-2), 1 , 1);
+                cor_pixel_final += cor_phon(&r, 10 , 1);
             }
             write_color(std::cout, cor_pixel_final, amostra_por_pixel);
         }

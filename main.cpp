@@ -6,6 +6,8 @@ using namespace std;
 
 Camera cameraa;
 std::vector<std::unique_ptr<Forma>> mundo;
+std::vector<std::unique_ptr<Ponto3>> luzes;
+
 
 Vetor3 reflexao_aleatoria() 
 {
@@ -21,38 +23,50 @@ Cor cor_phon(Raio *r, Ponto3 luz, int intensidade_luz, int coef_p)
 {
     hit_record registro;
 
+    
     for (const auto& forma : mundo) 
     {
         if (forma->hit(r, 0.001, infinito, registro))
         {
-            Vetor3 v = r->direcao.unit_vector();
-            Vetor3 l = luz - registro.p;
-            l = l/l.modulo();
-            Vetor3 h = v+l;
-            h = h/h.modulo();
-            double nl = l.prod_escalar(registro.normal);
-            Cor corlamb;
-            if (nl > 0)
-            {
-                corlamb =  Cor(0,0.5*intensidade_luz*nl,0);
-            }
-            else
-            {
-                corlamb = Cor(0,0 ,0);
-            }
             
+            Cor corFinal;
             
-
-            int coeficiente_spec;
-            double nh = h.prod_escalar(registro.normal);
-            if(nh > 0)
+            for (const auto& ponto : luzes)
             {
-                return Cor((0.5*intensidade_luz*nh),(0.5*intensidade_luz*nh),(0.5*intensidade_luz*nh)) + corlamb;
+                Vetor3 v = r->direcao.unit_vector();
+                Vetor3 l = *ponto - registro.p;
+                l = l/l.modulo();
+                Vetor3 h = v+l;
+                h = h/h.modulo();
+                double nl = l.prod_escalar(registro.normal);
+                Cor corlamb;
+                if (nl > 0)
+                {
+                    corlamb = (intensidade_luz*nl)*registro.cor;
+                }
+                else
+                {
+                    corlamb = Cor(0,0,0);
+                }
+                
+                int coeficiente_spec;
+                double nh = h.prod_escalar(registro.normal);
+                if(nh > 0)
+                {
+                    corFinal += Cor((0.5*intensidade_luz*nh),(0.5*intensidade_luz*nh),(0.5*intensidade_luz*nh)) + corlamb;
+                }
+                else
+                {
+                    corFinal += corlamb;
+                }
+                
             }
-            return corlamb;
+            return corFinal;
         }
     }
-    
+
+
+
     //Define o vetor unitario do raio dependendo de qual parte do espaço ele esta sendo atirado
     Vetor3 unit_direction = r->direcao.unit_vector();
     //Definindo a cor do fundo
@@ -75,9 +89,9 @@ Cor cor_luminosa(Raio *r, Ponto3 luz, int intensidade_luz)
             double nl = l.prod_escalar(registro.normal);
             if (nl > 0)
             {
-                return Cor(0,0.5*intensidade_luz*nl,0);
+                return (intensidade_luz*nl)*registro.cor;
             }
-            return Cor(0,0.5+nl,0);
+            return Cor(0,0,0);
         }
     }
     
@@ -149,21 +163,26 @@ void write_color(std::ostream &out, Vetor3 pixel_color, int amostras_por_pixel)
 
 int main()
 {
-    // int quantidadebola = 100;
+    int quantidadebola = 100;
 
-    // for (int i = 0; i < quantidadebola; i++)
-    // {
-    //     mundo.emplace_back(make_unique<Esfera>(Vetor3(random_double(-4,4), random_double(-3,3), random_double(-2,-10)),random_double(0.1,1)));
-    // }
+    for (int i = 0; i < quantidadebola; i++)
+    {
+        mundo.emplace_back(make_unique<Esfera>(Vetor3(random_double(-4,4), random_double(-3,3), random_double(-2,-10)),random_double(0.1,1),Cor(random_double(),random_double(),random_double())));
+    }
     
 
     
-    mundo.emplace_back(make_unique<Esfera>(Ponto3(-0.7, 0, -1.2), 0.5));
-    mundo.emplace_back(make_unique<Esfera>(Ponto3(0.7, 0, -0.9), 0.5));
+    mundo.emplace_back(make_unique<Esfera>(Ponto3(-0.7, 0, -1.2), 0.5, Cor(1,0,0)));
+    mundo.emplace_back(make_unique<Esfera>(Ponto3(0.7, 0, -0.9), 0.5, Cor(0,0,1)));
     // mundo.emplace_back(make_unique<Esfera>(Vetor3(0, 0.9, -0.9), 0.5));
 
     mundo.emplace_back(make_unique<Esfera>(Ponto3(0,-100.5,-1), 100));
     mundo.emplace_back(make_unique<Esfera>(Ponto3(4,4, -2), 1));
+
+    luzes.emplace_back(make_unique<Ponto3>(4,4,-2));
+    // luzes.emplace_back(make_unique<Ponto3>(4,4, 2));
+    luzes.emplace_back(make_unique<Ponto3>(0,2, 4));
+
 
     // Image
     const double aspect_ratio = 16.0 / 9.0;
@@ -191,7 +210,7 @@ int main()
                 Raio r(cameraa.get_raio(u,v));
                 // cor_pixel_final += cor_pixel(&r, max_depth);
                 // cor_pixel_final += cor_luminosa(&r,Ponto3(0,2,0),2);
-                cor_pixel_final += cor_phon(&r,Ponto3(4,4,-2), 2 , 1);
+                cor_pixel_final += cor_phon(&r,Ponto3(4,4,-2), 1 , 1);
             }
             write_color(std::cout, cor_pixel_final, amostra_por_pixel);
         }

@@ -13,6 +13,8 @@ struct hit_record
     double t;
     //Verificar se a visao da forma nao vai ser obstruida por outro objeto.
     bool frente;
+    //Cor do objeto
+    Cor cor;
 
     Material *mat_ptr;
 

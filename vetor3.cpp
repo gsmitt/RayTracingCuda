@@ -35,7 +35,7 @@ Vetor3& Vetor3::operator+=(const Vetor3 &v) {
     return *this;
 }
 
-Vetor3 operator*(double t, const Vetor3 &v) {
+Vetor3 operator*(double t, const Vetor3& v) {
     return Vetor3(t * v.a, t * v.b, t * v.c);
 }
 

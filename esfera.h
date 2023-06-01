@@ -10,8 +10,9 @@ public:
     Vetor3 centro;
     double raio;
     Material* material;
+    Cor cor;
 
-    Esfera(Ponto3 centro, double raio);
+    Esfera(Ponto3 centro, double raio, Cor cor = Cor(0,1,0));
 
     Esfera(Ponto3 centro, double raio, Material* material);
 

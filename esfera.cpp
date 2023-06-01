@@ -1,6 +1,6 @@
 #include "esfera.h"
 
-Esfera::Esfera(Ponto3 centro, double raio):centro(centro),raio(raio){}
+Esfera::Esfera(Ponto3 centro, double raio, Cor cor):centro(centro),raio(raio),cor(cor){}
 
 //Construtor com mateiral
 Esfera::Esfera(Ponto3 centro, double raio, Material* material):centro(centro),raio(raio),material(material){}
@@ -27,7 +27,7 @@ bool Esfera::hit( Raio *r, double t_min, double t_max, hit_record& registro)
         }
     }
 
-
+    registro.cor = cor;
     //Adiciona o t necessario para a colisao no registro
     registro.t = t;
     //Calcula o ponto de colisao

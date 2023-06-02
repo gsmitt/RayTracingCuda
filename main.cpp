@@ -43,7 +43,7 @@ Cor cor_phon(Raio *r, int intensidade_luz, int coef_p)
                         Raio raioSombra = Raio(registro.p, l);
                         if (forma2->hit(&raioSombra, 0.00001, infinito, rs))
                         {
-                            
+                            corFinal;
                         }
                         else
                         {
@@ -176,19 +176,19 @@ void write_color(std::ostream &out, Vetor3 pixel_color, int amostras_por_pixel)
     b = sqrt(scale*b);
 
     // Write the translated [0,255] value of each color component.
-    out << static_cast<int>(256 * clamp(r, 0.0, 0.999)) << ' '
-        << static_cast<int>(256 * clamp(g, 0.0, 0.999)) << ' '
-        << static_cast<int>(256 * clamp(b, 0.0, 0.999)) << '\n';
+    out << static_cast<uint8_t>(256 * clamp(r, 0.0, 0.999)) 
+        << static_cast<uint8_t>(256 * clamp(g, 0.0, 0.999))
+        << static_cast<uint8_t>(256 * clamp(b, 0.0, 0.999));
 }
 
 int main()
 {
-    // int quantidadebola = 20;
+    int quantidadebola = 20;
 
-    // for (int i = 0; i < quantidadebola; i++)
-    // {
-    //     mundo.emplace_back(make_unique<Esfera>(Vetor3(random_double(-4,4), random_double(-3,3), random_double(-2,-10)),random_double(0.1,1),Cor(random_double(),random_double(),random_double())));
-    // }
+    for (int i = 0; i < quantidadebola; i++)
+    {
+        mundo.emplace_back(make_unique<Esfera>(Vetor3(random_double(-4,4), random_double(-3,3), random_double(-2,-10)),random_double(0.1,1),Cor(random_double(),random_double(),random_double())));
+    }
     
 
     
@@ -197,7 +197,7 @@ int main()
     mundo.emplace_back(make_unique<Esfera>(Ponto3(0,-100.5,-1), 100));
 
 
-    luzes.emplace_back(make_unique<Ponto3>(-8,8,-2));
+    // luzes.emplace_back(make_unique<Ponto3>(-8,8,-2));
     // luzes.emplace_back(make_unique<Ponto3>(4,4, 2));
     luzes.emplace_back(make_unique<Ponto3>(8, 8, -0.8));
 
@@ -213,7 +213,7 @@ int main()
     const int max_depth = 1000;
 
     // Render
-    std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
+    std::cout << "P6\n" << image_width << " " << image_height << "\n255\n";
 
     for (double j = image_height-1; j >= 0; --j) 
     {
@@ -228,7 +228,7 @@ int main()
                 Raio r(cameraa.get_raio(u,v));
                 // cor_pixel_final += cor_pixel(&r, max_depth);
                 // cor_pixel_final += cor_luminosa(&r,Ponto3(0,2,0),2);
-                cor_pixel_final += cor_phon(&r, 10 , 1);
+                cor_pixel_final += cor_phon(&r, 2 , 1);
             }
             write_color(std::cout, cor_pixel_final, amostra_por_pixel);
         }

@@ -5,7 +5,7 @@ Esfera::Esfera(Ponto3 centro, double raio, Cor cor):centro(centro),raio(raio),co
 //Construtor com mateiral
 Esfera::Esfera(Ponto3 centro, double raio, Material* material):centro(centro),raio(raio),material(material){}
 
-bool Esfera::hit( Raio *r, double t_min, double t_max, hit_record& registro)
+inline bool Esfera::hit( Raio *r, double t_min, double t_max, hit_record& registro)
 {
     Vetor3 d_o = r->origem - centro;
     double a = (r->direcao.a*r->direcao.a) + (r->direcao.b*r->direcao.b) + (r->direcao.c*r->direcao.c);

@@ -17,5 +17,5 @@ public:
     Esfera(Ponto3 centro, double raio, Material* material);
 
 
-    virtual bool hit(Raio *r, double t_min, double t_max, hit_record& rec) override;
+    inline virtual bool hit(Raio *r, double t_min, double t_max, hit_record& rec) override;
 };

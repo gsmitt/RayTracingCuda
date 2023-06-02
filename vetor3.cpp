@@ -39,6 +39,10 @@ Vetor3 operator*(double t, const Vetor3& v) {
     return Vetor3(t * v.a, t * v.b, t * v.c);
 }
 
+Vetor3 operator*(const Vetor3& v, double t) {
+    return operator*(t, v);
+}
+
 Vetor3 Vetor3::operator+(const Vetor3 &v) const {
     return Vetor3(a + v.a, b + v.b, c + v.c);
 }

@@ -2,6 +2,8 @@
 #include "vetor3.h"
 #include "raio.h"
 
+class Material;
+
 struct hit_record
 {
     //Ponto de colisao
@@ -14,6 +16,8 @@ struct hit_record
     bool frente;
     //Cor do objeto
     Cor cor;
+    //Material do hit
+    shared_ptr<Material> material;
 
 
     //Verifica se o raio esta fora ou dentro da forma

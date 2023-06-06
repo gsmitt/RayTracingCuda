@@ -3,7 +3,7 @@
 Esfera::Esfera(Ponto3 centro, double raio, Cor cor):centro(centro),raio(raio),cor(cor){}
 
 //Construtor com mateiral
-Esfera::Esfera(Ponto3 centro, double raio):centro(centro),raio(raio){}
+Esfera::Esfera(Ponto3 centro, double raio, shared_ptr<Material> m):centro(centro),raio(raio),mat_ptr(m){}
 
 bool Esfera::hit( Raio &r, double t_min, double t_max, hit_record& registro)
 {
@@ -35,6 +35,8 @@ bool Esfera::hit( Raio &r, double t_min, double t_max, hit_record& registro)
     //Calcula o vetor normal do ponto da esfera
     Vetor3 fora = (registro.p - centro) / raio;
     registro.normal_face(r,fora);
+    registro.material = mat_ptr;
+
 
     return true;
 }

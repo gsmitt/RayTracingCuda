@@ -92,3 +92,11 @@ inline Vetor3 reflexao_aleatoria()
         return p;
     }
 }
+
+inline Vetor3 random_unit_vector() {
+    return unit_vector(reflexao_aleatoria());
+}
+
+inline Vetor3 refletir(const Vetor3& v, const Vetor3& n) {
+    return v - 2*produto_escalar(v,n)*n;
+}

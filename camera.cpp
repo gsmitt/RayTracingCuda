@@ -3,12 +3,12 @@
 
 Camera::Camera()
 {
-    double aspect_ratio = 16.0 / 9.0;
-    double viewport_height = 2.0;
-    double viewport_width = aspect_ratio * viewport_height;
-    double focal_length = 1.0;
+    const double aspect_ratio = RATIO_16_9;
+    const double viewport_height = 2.0;
+    const double viewport_width = aspect_ratio * viewport_height;
+    const double focal_length = 1.0;
 
-    origem = Vetor3(0, 0, 0);
+    origem = Ponto3(0, 0, 0);
     horizontal = Vetor3(viewport_width, 0.0, 0.0);
     vertical = Vetor3(0.0, viewport_height, 0.0);
     canto_esq_inf = origem - horizontal/2 - vertical/2 - Vetor3(0, 0, focal_length);

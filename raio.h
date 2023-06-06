@@ -10,10 +10,13 @@ public:
 
     Vetor3 origem, direcao;
 
-    //Vetor do ponto + (vetor direcao * t)
-    Vetor3 at(double t) const;
+    //Ponto3d + (vetor direcao * t)
+    Ponto3 at(double t) const;
+
+    Cor cor_raio() const;
 
     Raio(const Ponto3& origem, const Vetor3& direcao);
+    Raio();
     ~Raio();
 };
 

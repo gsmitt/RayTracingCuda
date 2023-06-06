@@ -1,237 +1,78 @@
-#include "esfera.h"
+#include <iostream>
+#include "imagem.h"
 #include "camera.h"
-#include "utils.h"
-#include <SDL2/SDL.h>
+#include "esfera.h"
+#include <fstream>
 
 using namespace std;
 
-Camera cameraa;
-std::vector<std::unique_ptr<Forma>> mundo;
-std::vector<std::unique_ptr<Ponto3>> luzes;
 
 
-Vetor3 reflexao_aleatoria() 
-{
-    while (true) 
+
+int main() {
+    Imagem imagem(800);
+
+    Camera camera;
+
+    std::ofstream arquivo("imagem.ppm");
+
+    hit_record registro;
+
+    srand(time(0));
+
+    std::vector<std::shared_ptr<Forma>> mundo;
+
+    mundo.emplace_back(std::make_shared<Esfera>(Ponto3(0,0,-1), 0.5, Cor(1,1,0)));
+    mundo.emplace_back(std::make_shared<Esfera>(Ponto3(0,1,-1), 0.5, Cor(1,1,1)));
+
+    const int MSAA = 1;
+
+
+
+    if (arquivo.is_open()) 
     {
-        Ponto3 p = Vetor3(random_double(-1,1),random_double(-1,1),random_double(-1,1));
-        if (p.prod_escalar(p) >= 1) continue;
-        return p;
-    }
-}
-
-Cor cor_phon(Raio *r, int intensidade_luz, int coef_p)
-{
-    hit_record registro, rs;
-    Cor corFinal = Cor(0,0,0);
-
-    for (const auto& forma : mundo) 
-    {
-        if (forma->hit(r, 0.001, infinito, registro))
+        arquivo << "P6\n" << imagem.largura << ' ' << imagem.altura << "\n255\n";
+        for (int i = imagem.altura - 1; i >= 0; i--) 
         {
-                
-                for (const auto& ponto : luzes)
+            for (int j = 0; j < imagem.largura; j++) 
+            {
+                Cor corfinal = Cor(0,0,0);
+
+                for (int k = 0; k < MSAA; k++)
                 {
-                    Vetor3 l = *ponto - registro.p;
-                    
-                    double distancia_ao_quadrado = l.prod_escalar(l);
-                    l = l / sqrt(distancia_ao_quadrado); // Normalizar o vetor l
-                    double intensidade_atenuada = intensidade_luz / (distancia_ao_quadrado);
 
-                    for (const auto& forma2 : mundo)
-                    {
-                        Raio raioSombra = Raio(registro.p, l);
-                        if (forma2->hit(&raioSombra, 0.00001, infinito, rs))
-                        {
-                            corFinal;
-                        }
-                        else
-                        {
-                            Vetor3 v = r->direcao.unit_vector();
-                            Vetor3 h = v+l;
-                            h = h/h.modulo();
-                            double nl = l.prod_escalar(registro.normal);
-                            Cor corlamb;
-                            if (nl > 0)
-                            {
-                                corlamb = (intensidade_atenuada*nl)*registro.cor;
-                            }
-                            else
-                            {
-                                corlamb = Cor(0,0,0);
-                            }
-                            
-                            //int coeficiente_spec;
-                            double nh = h.prod_escalar(registro.normal);
-                            if(nh > 0)
-                            {
-                                corFinal += Cor((0.1*intensidade_atenuada*nh),(0.1*intensidade_atenuada*nh),(0.1*intensidade_atenuada*nh)) + corlamb;
-                            }
-                            else
-                            {
-                                corFinal += corlamb;
-                            }
-                        }
-                        
+                    double u = (j + random_double()) / (imagem.largura-1);
+                    double v = (i + random_double()) / (imagem.altura-1);
+                    Raio r(camera.get_raio(u,v));
+                    bool objeto_atingido = false;
+                    double t_max = INFINITO;
 
+                    for (const auto &esfera : mundo) {
+                        if (esfera->hit(r,  0.001, t_max, registro)) {
+                            objeto_atingido = true;
+                            t_max = registro.t;
+                            corfinal += registro.cor;
+                        }
                     }
 
-
-
-                    
-                    
+                    if (objeto_atingido) 
+                    {
+                        imagem.escreve_pixel(arquivo, corfinal, MSAA);
+                    } 
+                    else 
+                    {
+                        imagem.escreve_pixel(arquivo, corfinal, MSAA);
+                    }
                 }
-                return corFinal;
-        }
-    }
-
-
-
-    //Define o vetor unitario do raio dependendo de qual parte do espaço ele esta sendo atirado
-    Vetor3 unit_direction = r->direcao.unit_vector();
-    //Definindo a cor do fundo
-    double t = 0.5*(unit_direction.b + 1.0);
-    return (1.0-t)*Cor(0.2, 0, 0.7) + t*Cor(1,1,1);
-}
-
-Cor cor_luminosa(Raio *r, Ponto3 luz, int intensidade_luz)
-{
-    hit_record registro;
-
-    for (const auto& forma : mundo) 
-    {
-        if (forma->hit(r, 0.001, infinito, registro))
-        {
-            Vetor3 v = r->direcao.unit_vector();
-            v = v/v.modulo();
-            Vetor3 l = luz - registro.p;
-            l = l/l.modulo();
-            double nl = l.prod_escalar(registro.normal);
-            if (nl > 0)
-            {
-                return (intensidade_luz*nl)*registro.cor;
-            }
-            return Cor(0,0,0);
-        }
-    }
-    
-    //Define o vetor unitario do raio dependendo de qual parte do espaço ele esta sendo atirado
-    Vetor3 unit_direction = r->direcao.unit_vector();
-    //Definindo a cor do fundo
-    double t = 0.5*(unit_direction.b + 1.0);
-    return (1.0-t)*Cor(0.2, 0, 0.7) + t*Cor(1,1,1);
-}
-
-
-Cor cor_pixel(Raio *r, int depth = 1)
-{
-    hit_record registro;
-    hit_record registro_perto;
-    bool intersecao_frente = false;
-    double t_proximo = infinito;
-
-    if (depth <= 0)
-        return Cor(1,1,1);
-
-    for (const auto& forma : mundo) 
-    {
-        if (forma->hit(r, 0.001, infinito, registro))
-        {
-            if (registro.t < t_proximo)
-            {
-                intersecao_frente = true;
-                t_proximo = registro.t;
-                registro_perto = registro;
             }
         }
-    }
-
-    if (intersecao_frente)
-    {   
-        Ponto3 alvo = registro_perto.p + registro_perto.normal + reflexao_aleatoria();
-        Raio r_temp = Raio(registro_perto.p, alvo - registro_perto.p);
-        return 0.5 * cor_pixel(&r_temp,(depth-1));
-
-        // Mostrar os vetores normais por cores
-        // return 0.5 * Cor(registro_perto.normal.a + 1,registro_perto.normal.b + 1,registro_perto.normal.c + 1);
-    }
-    
-    //Define o vetor unitario do raio dependendo de qual parte do espaço ele esta sendo atirado
-    Vetor3 unit_direction = r->direcao.unit_vector();
-    //Definindo a cor do fundo
-    double t = 0.5*(unit_direction.b + 1.0);
-    return (1.0-t)*Cor(0.2, 0, 0.7) + t*Cor(1,1,1);
-}
-
-void write_color(std::ostream &out, Vetor3 pixel_color, int amostras_por_pixel) 
-{
-    double r = pixel_color.a;
-    double g = pixel_color.b;
-    double b = pixel_color.c;
-
-    double scale = 1.0 / amostras_por_pixel;
-
-    r = sqrt(scale*r);
-    g = sqrt(scale*g);
-    b = sqrt(scale*b);
-
-    // Write the translated [0,255] value of each color component.
-    out << static_cast<uint8_t>(256 * clamp(r, 0.0, 0.999)) 
-        << static_cast<uint8_t>(256 * clamp(g, 0.0, 0.999))
-        << static_cast<uint8_t>(256 * clamp(b, 0.0, 0.999));
-}
-
-int main()
-{
-    int quantidadebola = 20;
-
-    for (int i = 0; i < quantidadebola; i++)
+        arquivo.close();
+        std::cout << "Arquivo PPM gerado com sucesso." << std::endl;
+    } 
+    else 
     {
-        mundo.emplace_back(make_unique<Esfera>(Vetor3(random_double(-4,4), random_double(-3,3), random_double(-2,-10)),random_double(0.1,1),Cor(random_double(),random_double(),random_double())));
+        std::cerr << "Erro ao abrir o arquivo." << std::endl;
     }
-    
 
-    
-    mundo.emplace_back(make_unique<Esfera>(Ponto3(-0.7, 0, -1.2), 0.5, Cor(1,0,0)));
-    mundo.emplace_back(make_unique<Esfera>(Ponto3(0.3, 0, -1), 0.6, Cor(0,0,1)));
-    mundo.emplace_back(make_unique<Esfera>(Ponto3(0,-100.5,-1), 100));
-
-
-    // luzes.emplace_back(make_unique<Ponto3>(-8,8,-2));
-    // luzes.emplace_back(make_unique<Ponto3>(4,4, 2));
-    luzes.emplace_back(make_unique<Ponto3>(8, 8, -0.8));
-
-
-    // Image
-    const double aspect_ratio = 16.0 / 9.0;
-    const int image_width = 800;
-    const int image_height = static_cast<int>(image_width / aspect_ratio);
-
-
-    const int amostra_por_pixel = 10;
-
-    const int max_depth = 1000;
-
-    // Render
-    std::cout << "P6\n" << image_width << " " << image_height << "\n255\n";
-
-    for (double j = image_height-1; j >= 0; --j) 
-    {
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-        for (double i = 0; i < image_width; ++i) 
-        {
-            Cor cor_pixel_final(0,0,0);
-            for (double k = 0; k < amostra_por_pixel; k++)
-            {
-                double u = (i + random_double()) / (image_width-1);
-                double v = (j + random_double()) / (image_height-1);
-                Raio r(cameraa.get_raio(u,v));
-                // cor_pixel_final += cor_pixel(&r, max_depth);
-                // cor_pixel_final += cor_luminosa(&r,Ponto3(0,2,0),2);
-                cor_pixel_final += cor_phon(&r, 2 , 1);
-            }
-            write_color(std::cout, cor_pixel_final, amostra_por_pixel);
-        }
-    }
-    std::cerr << "\nDone.\n";
+    return 0;
 }

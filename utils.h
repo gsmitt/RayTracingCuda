@@ -17,15 +17,14 @@ using std::sqrt;
 using namespace std;
 
 
-const double infinito = std::numeric_limits<double>::infinity();
+const double INFINITO = std::numeric_limits<double>::infinity();
+const double RATIO_16_9 = 16.0/9.0;
 
 inline double random_double() {
-    // Returns a random real in [0,1).
     return rand() / (RAND_MAX + 1.0);
 }
 
 inline double random_double(double min, double max) {
-    // Returns a random real in [min,max).
     return min + (max-min)*random_double();
 }
 

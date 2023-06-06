@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <cmath>
+#include "utils.h"
 
 
 class Vetor3
@@ -76,5 +77,18 @@ inline Vetor3 unit_vector(Vetor3 v) {
     return v / v.modulo();
 }
 
+
+
 using Ponto3 = Vetor3;  
 using Cor = Vetor3;    
+
+
+inline Vetor3 reflexao_aleatoria() 
+{
+    while (true) 
+    {
+        Ponto3 p = Vetor3(random_double(-1,1),random_double(-1,1),random_double(-1,1));
+        if (p.modulo_quadrado() >= 1) continue;
+        return p;
+    }
+}

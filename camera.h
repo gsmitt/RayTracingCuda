@@ -6,6 +6,8 @@
 class Camera {
     public:
         Camera();
+        Camera(Ponto3 lookfrom, Ponto3 lookat, Vetor3 vup, double aspect_ratio);
+
         Camera(Ponto3 origem, Vetor3 canto_esq_inf, Vetor3 horizontal, Vetor3 vertical);
 
         Vetor3 origem;

@@ -179,8 +179,8 @@ Cor cor_phon(Raio &r, int intensidade_luz, int coef_p)
 int main() {
     Imagem imagem(1200);
 
-    //Camera camera;
-    Camera camera(Ponto3(5,1.5,2.5), Ponto3(0,0,-0.5), Ponto3(0,1,0), RATIO_16_9);
+    Camera camera;
+    // Camera camera(Ponto3(5,1.5,2.5), Ponto3(0,0,-0.5), Ponto3(0,1,0), RATIO_16_9);
 
     std::ofstream arquivo("imagem.ppm");
 
@@ -188,9 +188,9 @@ int main() {
     //2 = sem material com ilumincao
     //3 = com material
     //4 = Cena aleatoria
-    int MODO = 4;
+    int MODO = 2;
 
-    const int MSAA = 300;
+    const int MSAA = 32;
 
     srand(time(0));
 
@@ -303,7 +303,7 @@ int main() {
                     Raio r(camera.get_raio(u,v));
                     if (MODO == 2)
                     {
-                        corfinal +=cor_phon(r,2,1);
+                        corfinal +=cor_phon(r,10,1);
                     }
                     if (MODO == 3 || MODO==4)
                     {

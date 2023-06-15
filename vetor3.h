@@ -85,12 +85,10 @@ using Cor = Vetor3;
 
 inline Vetor3 reflexao_aleatoria() 
 {
-    while (true) 
-    {
-        Ponto3 p = Vetor3(random_double(-1,1),random_double(-1,1),random_double(-1,1));
-        if (p.modulo_quadrado() >= 1) continue;
-        return p;
-    }
+    
+    Ponto3 p = Vetor3(random_double(-1,1),random_double(-1,1),random_double(-1,1));
+    return p;
+
 }
 
 inline Vetor3 random_unit_vector() {

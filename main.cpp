@@ -6,17 +6,18 @@
 #include <sstream>
 #include "material.h"
 
-//#define CENA_ALEATORIA 0
+#define CENA_ALEATORIA 1
 using namespace std;
 
 std::vector<std::shared_ptr<Forma>> mundo;
 std::vector<std::unique_ptr<Ponto3>> luzes;
 auto metal_rosa = make_shared<Metal>(Cor(1, 0.5, 0.5));
-auto luz = make_shared<Lambertian>(Cor(1, 1, 1),1000,Cor(1,1,1));
 auto metal_preto = make_shared<Metal>(Cor(0.2, 0.2, 0.2));
 auto difuso_laranja = make_shared<Lambertian>(Cor(1, 0.5, 0));
 auto difuso_verde = make_shared<Lambertian>(Cor(0, 1, 0));
 auto chao = make_shared<Lambertian>(Cor(0.807, 0.894, 0.815));
+auto difuso_rosa = make_shared<Lambertian>(Cor(1, 0.5, 0.5));
+auto luzfoda = make_shared<Luz>(Cor(1,1,1),Cor(1,1,1),100);
 
 
 
@@ -48,11 +49,13 @@ Cor cor_raio(Raio& r, int depth)
         if (intersecao_frente)
         {   
             Raio disperso;
-            luz = (luz + registro_perto.material->emitir())*contribuicao;
+            
             //luz += registro_perto.material->albedo;
             // cout << luz.a << luz.b << luz.c << "\n";
+            luz = (luz + registro_perto.material->emitir())*contribuicao;
             registro_perto.material->dispersar(r,registro_perto,contribuicao,r);
-
+            
+                
         }
         else
         {
@@ -63,31 +66,35 @@ Cor cor_raio(Raio& r, int depth)
 }
 
 int main() {
-    Imagem imagem(1600);
+    Imagem imagem(800);
 
-    Camera camera;
-    //Camera camera(Ponto3(5,1.5,2.5), Ponto3(0,0,-0.5), Ponto3(0,1,0), RATIO_16_9);
+    //Camera camera;
+    // Camera camera(Ponto3(5,1.5,2.5), Ponto3(0,0,-0.5), Ponto3(0,1,0), RATIO_16_9);
+    Camera camera(Ponto3(2,1.5,2.5), Ponto3(0,0,-0.5), Ponto3(0,1,0), RATIO_16_9);
 
     std::ofstream arquivo("imagem.ppm");
 
     hit_record registro;
-    const int MSAA = 100;
+    const int MSAA = 2000;
 
     srand(time(0));
 
-#ifndef CENA_ALEATORIA
+#if CENA_ALEATORIA
 
-    mundo.emplace_back(std::make_shared<Esfera>(Ponto3(1,2,-3), 0.5, luz));
-    mundo.emplace_back(std::make_shared<Esfera>(Ponto3(-1,0,-1), 0.5, metal_rosa));
+    mundo.emplace_back(std::make_shared<Esfera>(Ponto3(1,2,-3), 0.5, luzfoda));
+    mundo.emplace_back(std::make_shared<Esfera>(Ponto3(-1,0,-1), 0.5, difuso_laranja));
+    mundo.emplace_back(std::make_shared<Esfera>(Ponto3(-1,0,-2), 0.5, difuso_rosa));
+    mundo.emplace_back(std::make_shared<Esfera>(Ponto3(2,2,-3), 2, metal_rosa));
+        mundo.emplace_back(std::make_shared<Esfera>(Ponto3(-2,2,0), 0.5, luzfoda));
+
+
     mundo.emplace_back(std::make_shared<Esfera>(Ponto3( 0.0, -100.5, -1.0), 100, difuso_verde));
     // mundo.emplace_back(std::make_shared<Esfera>(Ponto3(0,0.6,-1.5), 0.5, metal_rosa));
     // mundo.emplace_back(std::make_shared<Esfera>(Ponto3(0.5,0.2,-0.5), 0.1, difuso_laranja));
     // mundo.emplace_back(std::make_shared<Esfera>(Ponto3(-0.5,0.2,-0.5), 0.1, difuso_amarelo));
 
-#endif
-
-#ifdef CENA_ALEATORIA
-
+#else
+    mundo.emplace_back(std::make_shared<Esfera>(Ponto3(1,2,-3), 0.5, luz));
     mundo.emplace_back(make_shared<Esfera>(Ponto3(0,-1000,0), 1000, chao));
     for (int a = -11; a < 11; a++) 
     {

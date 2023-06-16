@@ -4,17 +4,17 @@ class Material
 {
 public:
     Cor albedo;
-    float poder_emissao;
+    double poder_emissao;
     Cor cor_emissao;
     virtual bool dispersar(const Raio &raio, const hit_record& registro, Cor &atenuada, Raio &disperso) const = 0;
-    virtual Cor emitir() const {return cor_emissao*poder_emissao;};
+    virtual Cor emitir() const {return Cor(0,0,0);};
 };
 
 
 
 class Lambertian : public Material {
     public:
-        Lambertian(const Cor& a, float poder_emissao = 0, Cor cor_emissao = Cor(0,0,0)) : albedo(a), poder_emissao(poder_emissao), cor_emissao(cor_emissao) {}
+        Lambertian(const Cor& a) : albedo(a){}
 
         virtual Cor emitir() const override {return cor_emissao*poder_emissao;};
 
@@ -22,13 +22,13 @@ class Lambertian : public Material {
         {
             Vetor3 scatter_direction = registro.normal + random_unit_vector();
             disperso = Raio(registro.p, scatter_direction);
-            atenuada = atenuada*albedo;
+            atenuada = albedo;
             return true;
         }
 
     public:
         Cor albedo;
-        float poder_emissao;
+        double poder_emissao;
         Cor cor_emissao;
 };
 
@@ -47,4 +47,23 @@ class Metal : public Material {
 
     public:
         Cor albedo;
+};
+
+class Luz : public Material
+{
+    public:
+        Luz(const Cor& albedo, const Cor& cor_emissao, double poder_emissao)
+        {
+            this->albedo = albedo;
+            this->cor_emissao = cor_emissao;
+            this->poder_emissao = poder_emissao;
+        }
+        
+        virtual bool dispersar(const Raio& r_in, const hit_record& registro, Cor& atenuada, Raio& disperso) const override 
+        {
+            return true;
+        }
+
+        virtual Cor emitir() const override {return cor_emissao*poder_emissao;};
+
 };

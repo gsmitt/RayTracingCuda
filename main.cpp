@@ -4,9 +4,14 @@
 #include "esfera.h"
 #include <fstream>
 #include <sstream>
+#include <pthread.h>
+#include <vector>
 #include "material.h"
 
 #define CENA_ALEATORIA 1
+#define MSAA 100
+#define THREADS 4
+
 using namespace std;
 
 std::vector<std::shared_ptr<Forma>> mundo;
@@ -19,7 +24,20 @@ auto chao = make_shared<Lambertian>(Cor(0.807, 0.894, 0.815));
 auto difuso_rosa = make_shared<Lambertian>(Cor(1, 0.5, 0.5));
 auto luzfoda = make_shared<Luz>(Cor(1,1,1),Cor(1,1,1),100);
 
+pthread_mutex_t mutex; // Mutex global para proteção de escrita
 
+struct ThreadArgs {
+    int start_row;
+    int end_row;
+    int largura;
+    int altura;
+};
+
+Camera camera(Ponto3(2,1.5,2.5), Ponto3(0,0,-0.5), Ponto3(0,1,0), RATIO_16_9); // Global camera
+
+Imagem imagem(800);
+
+std::ofstream arquivo("imagem.ppm");
 
 Cor cor_raio(Raio& r, int depth) 
 {
@@ -49,106 +67,105 @@ Cor cor_raio(Raio& r, int depth)
         if (intersecao_frente)
         {   
             Raio disperso;
-            
-            //luz += registro_perto.material->albedo;
-            // cout << luz.a << luz.b << luz.c << "\n";
-            luz = (luz + registro_perto.material->emitir())*contribuicao;
+            luz = (luz + registro_perto.material->emitir()) * contribuicao;
             registro_perto.material->dispersar(r,registro_perto,contribuicao,r);
-            
-                
-        }
-        else
-        {
-            //luz = Cor(0.2,0.2,0.2);
         }
     }
     return luz;
 }
 
+std::vector<std::vector<Cor>> resultados_threads(imagem.altura);
+// Função que será executada por cada thread
+void* processar_linhas(void* args) {
+    // Converte o argumento de volta para o tipo correto
+    ThreadArgs* arg = (ThreadArgs*)args;
+
+    int start_row = arg->start_row;
+    int end_row = arg->end_row;
+    int largura = arg->largura;
+    int altura = arg->altura;
+    
+    
+    for (int i = start_row; i < end_row; i++) 
+    {
+        std::vector<Cor> lista_pixels;
+        for (int j = 0; j < largura; j++) 
+        {
+            
+            Cor corfinal(0,0,0);
+            for (int k = 0; k < MSAA; k++)
+            {
+                double u = (j + random_double()) / (largura-1);
+                double v = (i + random_double()) / (altura-1);
+                Raio r(camera.get_raio(u,v));
+                corfinal += cor_raio(r, 3);
+            }
+
+            lista_pixels.push_back(corfinal);
+        }
+        pthread_mutex_lock(&mutex);
+            resultados_threads[i] = lista_pixels;
+        pthread_mutex_unlock(&mutex);
+    
+    }
+    
+    return nullptr;
+}
+
+void processar_imagem() 
+{
+    pthread_t threads[THREADS]; // Número de threads a serem usadas
+
+    int rows_per_thread = imagem.altura / THREADS; // Dividindo as linhas da imagem em 4 partes
+
+    // Criar e iniciar threads
+    for (int i = 0; i < THREADS; ++i) 
+    {
+        ThreadArgs* args = new ThreadArgs;
+        args->start_row = i * rows_per_thread;
+        if(i == THREADS-1){
+            args->end_row = imagem.altura;
+        } else {
+            args->end_row = (i + 1) * rows_per_thread;
+        }
+        args->largura = imagem.largura;
+        args->altura = imagem.altura;
+        pthread_create(&threads[i], nullptr, processar_linhas, (void*)args);
+    }
+
+    // Espera todas as threads terminarem
+    for (int i = 0; i < THREADS; ++i) {
+        pthread_join(threads[i], nullptr);
+    }
+
+
+    for (size_t i = resultados_threads.size(); i > 0; --i) {
+    size_t idx = i - 1;
+    for (size_t j = 0; j < resultados_threads[idx].size(); j++) {
+        Cor& pixel = resultados_threads[idx][j]; 
+        imagem.escreve_pixel(arquivo, pixel, MSAA);
+    }
+}
+
+}
+
 int main() {
-    Imagem imagem(800);
-
-    //Camera camera;
-    // Camera camera(Ponto3(5,1.5,2.5), Ponto3(0,0,-0.5), Ponto3(0,1,0), RATIO_16_9);
-    Camera camera(Ponto3(2,1.5,2.5), Ponto3(0,0,-0.5), Ponto3(0,1,0), RATIO_16_9);
-
-    std::ofstream arquivo("imagem.ppm");
-
-    hit_record registro;
-    const int MSAA = 2000;
-
     srand(time(0));
-
-#if CENA_ALEATORIA
 
     mundo.emplace_back(std::make_shared<Esfera>(Ponto3(1,2,-3), 0.5, luzfoda));
     mundo.emplace_back(std::make_shared<Esfera>(Ponto3(-1,0,-1), 0.5, difuso_laranja));
     mundo.emplace_back(std::make_shared<Esfera>(Ponto3(-1,0,-2), 0.5, difuso_rosa));
     mundo.emplace_back(std::make_shared<Esfera>(Ponto3(2,2,-3), 2, metal_rosa));
-        mundo.emplace_back(std::make_shared<Esfera>(Ponto3(-2,2,0), 0.5, luzfoda));
-
-
+    mundo.emplace_back(std::make_shared<Esfera>(Ponto3(-2,2,0), 0.5, luzfoda));
     mundo.emplace_back(std::make_shared<Esfera>(Ponto3( 0.0, -100.5, -1.0), 100, difuso_verde));
-    // mundo.emplace_back(std::make_shared<Esfera>(Ponto3(0,0.6,-1.5), 0.5, metal_rosa));
-    // mundo.emplace_back(std::make_shared<Esfera>(Ponto3(0.5,0.2,-0.5), 0.1, difuso_laranja));
-    // mundo.emplace_back(std::make_shared<Esfera>(Ponto3(-0.5,0.2,-0.5), 0.1, difuso_amarelo));
-
-#else
-    mundo.emplace_back(std::make_shared<Esfera>(Ponto3(1,2,-3), 0.5, luz));
-    mundo.emplace_back(make_shared<Esfera>(Ponto3(0,-1000,0), 1000, chao));
-    for (int a = -11; a < 11; a++) 
-    {
-        for (int b = -11; b < 11; b++) 
-        {
-            auto choose_mat = random_double();
-            Ponto3 center(a + 0.9*random_double(), 0.2, b + 0.9*random_double());
-            if ((center - Ponto3(4, 0.2, 0)).modulo() > 0.9) {
-                shared_ptr<Material> sphere_material;
-                if (choose_mat < 0.8) {
-                    // diffuse
-                    auto albedo = Ponto3(random_double(0.5, 1), random_double(0.5, 1), random_double(0.5, 1)) * Ponto3(random_double(0.5, 1), random_double(0.5, 1), random_double(0.5, 1));
-                    sphere_material = make_shared<Lambertian>(albedo);
-                    mundo.emplace_back((make_shared<Esfera>(center, 0.2, sphere_material)));
-                } else if (choose_mat < 0.95) {
-                    // metal
-                    auto albedo = Ponto3(random_double(0.5, 1), random_double(0.5, 1), random_double(0.5, 1));
-                    sphere_material = make_shared<Metal>(albedo);
-                    mundo.emplace_back((make_shared<Esfera>(center, 0.2, sphere_material)));
-                } else {
-                    auto albedo = Ponto3(random_double(0.5, 1), random_double(0.5, 1), random_double(0.5, 1)) ;
-                    sphere_material = make_shared<Metal>(albedo);
-                    mundo.emplace_back((make_shared<Esfera>(center, 0.2, sphere_material)));
-                }
-            }
-        }
-    }
-    auto material1 = make_shared<Metal>(Ponto3(0.7, 0.6, 0.5));
-    mundo.emplace_back((make_shared<Esfera>(Ponto3(0, 1, 0), 1.0, material1)));
-    auto material2 = make_shared<Lambertian>(Ponto3(0.4, 0.2, 0.1));
-    mundo.emplace_back((make_shared<Esfera>(Ponto3(-4, 1, 0), 1.0, material2)));
-    auto material3 = make_shared<Metal>(Ponto3(0.7, 0.6, 0.5));
-    mundo.emplace_back((make_shared<Esfera>(Ponto3(4, 1, 0), 1.0, material3)));
-
-#endif
 
     if (arquivo.is_open()) 
     {
         arquivo << "P6\n" << imagem.largura << ' ' << imagem.altura << "\n255\n";
-        for (int i = imagem.altura - 1; i >= 0; i--) 
-        {
-            for (int j = 0; j < imagem.largura; j++) 
-            {
-                Cor corfinal(0,0,0);
-                for (int k = 0; k < MSAA; k++)
-                {
-                    double u = (j + random_double()) / (imagem.largura-1);
-                    double v = (i + random_double()) / (imagem.altura-1);
-                    Raio r(camera.get_raio(u,v));
-                    corfinal += cor_raio(r,3);
-                }
-                imagem.escreve_pixel(arquivo, corfinal, MSAA);
-            }
-        }
+        
+        // Call the new function to process the image
+        processar_imagem();
+
         arquivo.close();
         std::cout << "Arquivo PPM gerado com sucesso." << std::endl;
     } 
